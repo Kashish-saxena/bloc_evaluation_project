@@ -1,5 +1,6 @@
 import 'package:bloc_project/bloc/api_bloc.dart';
 import 'package:bloc_project/bloc/api_event.dart';
+import 'package:bloc_project/bloc/update_bloc.dart';
 import 'package:bloc_project/screens/user_screen.dart';
 import 'package:bloc_project/screens/welcome_screen.dart';
 import 'package:flutter/material.dart';
@@ -17,7 +18,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (context) => ApiBloc()..add(GetApiList()))
+        BlocProvider(create: (context) => ApiBloc()..add(GetApiList())),
+        BlocProvider( create: (context) => UpdateBloc(),),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

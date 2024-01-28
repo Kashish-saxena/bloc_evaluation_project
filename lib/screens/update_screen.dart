@@ -1,41 +1,41 @@
-import 'dart:developer';
-import 'package:bloc_project/models/signup_request_model.dart';
-import 'package:bloc_project/services/update_api_service.dart';
-import 'package:bloc_project/utils/signup_verification.dart';
-import 'package:bloc_project/widgets/back_button.dart';
-import 'package:bloc_project/widgets/radio_field.dart';
-import 'package:bloc_project/widgets/text_form_field.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:bloc_project/bloc/update_bloc.dart';
+import 'package:bloc_project/bloc/update_event.dart';
+import 'package:bloc_project/bloc/update_state.dart';
+import 'package:bloc_project/models/signup_request_model.dart';
+import 'package:bloc_project/utils/signup_verification.dart';
+import 'package:bloc_project/widgets/radio_field.dart';
 
 class UpdateScreen extends StatefulWidget {
-  const UpdateScreen(
-      {super.key,
-      required this.userId,
-      this.userName,
-      this.userEmail,
-      this.userGender,
-      required this.userStatus});
   final int userId;
   final String? userName;
   final String? userEmail;
   final String? userGender;
   final String userStatus;
 
+  const UpdateScreen({
+    Key? key,
+    required this.userId,
+    this.userName,
+    this.userEmail,
+    this.userGender,
+    required this.userStatus,
+  }) : super(key: key);
+
   @override
-  State<UpdateScreen> createState() => _UpdateScreenState();
+  _UpdateScreenState createState() => _UpdateScreenState();
 }
 
 class _UpdateScreenState extends State<UpdateScreen> {
   final GlobalKey<FormState> _updateKey = GlobalKey<FormState>();
   TextEditingController nameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
-  TextEditingController passwordController = TextEditingController();
   String? gender;
 
   @override
   void initState() {
     super.initState();
-    log(widget.userGender ?? "");
     nameController.text = widget.userName ?? "";
     emailController.text = widget.userEmail ?? "";
     gender = widget.userGender ?? "";
@@ -43,152 +43,122 @@ class _UpdateScreenState extends State<UpdateScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return buildBody();
-  }
-
-  Widget buildBody() {
-    return Scaffold(
-      appBar: AppBar(
-        leading: BackButtonWidget(
-          onTap: () => Navigator.pop(context),
+    return BlocListener<UpdateBloc, UpdateState>(
+      listener: (context, state) {
+        if (state is UpdateSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text("Updated user details."),
+          ));
+          Navigator.pop(context);
+        } else if (state is UpdateFailed) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text("Failed to update user details."),
+          ));
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            "Update Screen",
+            style: TextStyle(color: Colors.black),
+          ),
+          leading: BackButton(
+            onPressed: () => Navigator.pop(context),
+          ),
+          centerTitle: true,
         ),
-        centerTitle: true,
-        title: const Text(
-          "Update Screen",
-          style: TextStyle(color: Colors.black),
-        ),
-      ),
-      body: SingleChildScrollView(
-        child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-          child: Form(
-            key: _updateKey,
-            child: Column(
-              children: [
-                TextFormFieldWidget(
-                  validator: (val) {
-                    return Verification.isNameValid(val);
-                  },
-                  obscureText: false,
-                  controller: nameController,
-                  text: "Name",
-                ),
-                TextFormFieldWidget(
+        body: SingleChildScrollView(
+          child: Container(
+            margin: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+            child: Form(
+              key: _updateKey,
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: nameController,
+                    decoration: InputDecoration(labelText: "Name"),
                     validator: (val) {
-                      return Verification.isEmailValid(val);
+                      return Verification.isNameValid(val ?? "");
                     },
-                    obscureText: false,
+                  ),
+                  TextFormField(
                     controller: emailController,
-                    text: "Email"),
-                RadioFieldWidget(
-                  widget: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      const Text("Gender",
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              color: Color(0xff8391A1))),
-                      Flexible(
-                        child: ListTile(
-                          textColor: const Color(0xff8391A1),
-                          contentPadding: EdgeInsets.zero,
-                          leading: Radio(
-                              value: "male",
-                              groupValue: gender,
-                              onChanged: (value) {
-                                setState(() {
-                                  gender = value;
-                                });
-                              }),
-                          title: const Text("Male"),
-                        ),
-                      ),
-                      Flexible(
-                        child: ListTile(
-                          textColor: const Color(0xff8391A1),
-                          contentPadding: EdgeInsets.zero,
-                          leading: Radio(
-                              value: "female",
-                              groupValue: gender,
-                              onChanged: (value) {
-                                setState(() {
-                                  gender = value;
-                                });
-                              }),
-                          title: const Text("Female"),
-                        ),
-                      )
-                    ],
+                    decoration: InputDecoration(labelText: "Email"),
+                    validator: (val) {
+                      return Verification.isEmailValid(val ?? "");
+                    },
                   ),
-                ),
-                const SizedBox(
-                  height: 30,
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    fixedSize: const Size(370, 60),
-                    backgroundColor: const Color(0xff1E232C),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                  RadioFieldWidget(
+                    widget: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        const Text("Gender",
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                                color: Color(0xff8391A1))),
+                        Flexible(
+                          child: ListTile(
+                            textColor: const Color(0xff8391A1),
+                            contentPadding: EdgeInsets.zero,
+                            leading: Radio(
+                                value: "male",
+                                groupValue: gender,
+                                onChanged: (value) {
+                                  setState(() {
+                                    gender = value.toString();
+                                  });
+                                }),
+                            title: const Text("Male"),
+                          ),
+                        ),
+                        Flexible(
+                          child: ListTile(
+                            textColor: const Color(0xff8391A1),
+                            contentPadding: EdgeInsets.zero,
+                            leading: Radio(
+                                value: "female",
+                                groupValue: gender,
+                                onChanged: (value) {
+                                  setState(() {
+                                    gender = value.toString();
+                                  });
+                                }),
+                            title: const Text("Female"),
+                          ),
+                        )
+                      ],
+                    ),
                   ),
-                  onPressed: () async {
-                    if (_updateKey.currentState!.validate()) {
-                      String updatedName = nameController.text;
-                      String updatedEmail = emailController.text;
-                      String updatedGender = gender ?? "";
-
-                      if (updatedName != widget.userName ||
-                          updatedEmail != widget.userEmail ||
-                          updatedGender != widget.userGender) {
-                        SignUpRequestModel signUpRequestModel =
-                            SignUpRequestModel(
-                          name: updatedName,
-                          email: updatedEmail,
-                          gender: updatedGender,
-                          status: "Active",
-                        );
-                        bool isSuccess = await UpdateApiService.updateUser(
-                          widget.userId,
-                          signUpRequestModel,
-                        );
-                        if (isSuccess) {
-                          const snackBar = SnackBar(
-                            content: Text("User Details updated"),
-                            duration: Duration(seconds: 2),
+                  SizedBox(height: 30),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (_updateKey.currentState!.validate()) {
+                        String updatedName = nameController.text;
+                        String updatedEmail = emailController.text;
+                        if (updatedName != widget.userName ||
+                            updatedEmail != widget.userEmail ||
+                            gender != widget.userGender) {
+                          SignUpRequestModel signUpRequestModel =
+                              SignUpRequestModel(
+                            name: updatedName,
+                            email: updatedEmail,
+                            gender: gender ?? "",
+                            status: "Active",
                           );
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                        } else {
-                          log("No changes detected");
-                          const snackBar = SnackBar(
-                            content: Text("No Changes detected"),
-                            duration: Duration(seconds: 2),
-                          );
-                          if (context.mounted) {
-                            //throwing the warning that buildcontext can't be used in async
-
-                            ScaffoldMessenger.of(context)
-                                .showSnackBar(snackBar);
-                          }
+                          context.read<UpdateBloc>().add(
+                                PerformUpdateEvent(
+                                  widget.userId,
+                                  signUpRequestModel,
+                                ),
+                              );
                         }
-                      } else {
-                        log("No Changes detected");
-                        const snackBar = SnackBar(
-                          content: Text("No Changes detected"),
-                          duration: Duration(seconds: 2),
-                        );
-                        ScaffoldMessenger.of(context).showSnackBar(snackBar);
                       }
-                    }
-                  },
-                  child: const Text("Update",
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600)),
-                ),
-              ],
+                    },
+                    child: Text("Update"),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

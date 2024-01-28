@@ -10,8 +10,3 @@ class DeleteList extends ApiEvent {
   DeleteList(this.userId);
 }
 
-class UpdateApiList extends ApiEvent {
-  UpdateApiList(String? gender);
-}
-
-class PostApiList extends ApiEvent {}
